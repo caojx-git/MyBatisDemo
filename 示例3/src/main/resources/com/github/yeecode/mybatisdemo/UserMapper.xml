@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.yeecode.mybatisdemo.UserMapper">
+    <select id="queryUserBySchoolName" resultType="com.github.yeecode.mybatisdemo.User">
+        SELECT * FROM `user`
+        <if test="schoolName != null">
+            WHERE schoolName = #{schoolName}
+        </if>
+    </select>
+
+    <select id="queryUserBySchoolName2" resultType="com.github.yeecode.mybatisdemo.User">
+        SELECT * FROM `user` WHERE 1 = 1
+        <if test="id != null">
+            AND id = #{id}
+        </if>
+        <if test="name != null and name != ''">
+            AND name = #{name}
+        </if>
+        <if test="emailAddress != null and emailAddress != ''">
+            AND email = #{emailAddress}
+        </if>
+        <if test="age != null">
+            AND age = #{age}
+        </if>
+        <if test="schoolName != null">
+            AND schoolName = #{schoolName}
+        </if>
+    </select>
+</mapper>

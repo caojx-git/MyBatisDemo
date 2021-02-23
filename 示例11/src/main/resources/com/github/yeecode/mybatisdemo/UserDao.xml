@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.yeecode.mybatisdemo.UserDao"> <!--由XMLMapperBuilder类解析-->
+    <cache-ref namespace="com.github.yeecode.mybatisdemo"/> <!--由CacheRefResolver类解析-->
+    <cache eviction="FIFO" flushInterval="60000"/><!--对应Cache类-->
+
+    <parameterMap id="userParam01" type="User"> <!--对应ParameterMap类-->
+        <parameter property="name" javaType="String"/> <!--对应ParameterMapping-->
+        <parameter property="schoolName" javaType="String"/> <!--对应ParameterMapping-->
+    </parameterMap>
+
+    <resultMap id="detailedMap" type="user">
+        <constructor>
+            <idArg column="id" javaType="int"/>
+            <arg column="name" javaType="string"/>
+        </constructor>
+        <result property="sex" column="sex"/>
+        <association property="bag" javaType="Bag" select="queryUserBag">
+            <id property="name" column="name"/>
+            <result property="weight" column="weight"/>
+        </association>
+        <collection property="books" ofType="Book">
+            <id property="name" column="name"/>
+            <result property="price" column="price"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="userMapFull" type="User"> <!--对应ResultMap类-->
+        <result property="id" column="id"/> <!--对应ResultMapping类-->
+        <result property="schoolName" column="id"/> <!--对应ResultMapping类-->
+    </resultMap>
+
+    <resultMap id="userMap" type="User" autoMapping="false"> <!--对应ResultMap类-->
+        <result property="id" column="id"/> <!--对应ResultMapping类-->
+        <result property="name" column="name"/> <!--对应ResultMapping类-->
+        <discriminator javaType="int" column="sex"> <!--对应Discriminator类-->
+            <case value="0" resultMap="boyUserMap"/>
+            <case value="1" resultMap="girlUserMap"/>
+        </discriminator>
+    </resultMap>
+
+    <resultMap id="girlUserMap" type="Girl" extends="userMap">
+        <result property="email" column="email"/>
+    </resultMap>
+
+    <resultMap id="boyUserMap" type="Boy" extends="userMap">
+        <result property="age" column="age"/>
+    </resultMap>
+
+    <sql id="byId">
+        WHERE `id` = #{id};
+    </sql>
+
+
+    <select id="selectById" resultMap="userMap"> <!--对应MappedStatement对象，由XMLStatementBuilder解析-->
+        SELECT  * FROM `user` <!--对应SqlSource类，由SqlSourceBuilder解析-->
+        <include refid="byId"/> <!--由XMLIncludeTransformer解析-->
+    </select>
+
+    <select id="selectByAge" resultMap="userMap" databaseId="mysql">
+        SELECT * FROM `user` WHERE `age` = #{age} TOP 5
+    </select>
+
+    <select id="selectByAge" resultMap="userMap" databaseId="sqlserver">
+        SELECT * FROM `user` WHERE `age` = #{age} LIMIT 5
+    </select>
+
+    <select id="selectUsers" resultMap="userMapFull"> <!--对应MappedStatement对象，由XMLStatementBuilder解析-->
+        SELECT *    <!--对应SqlSource类，由SqlSourceBuilder解析-->
+        FROM `user`
+        WHERE `id` IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">  <!--对应SqlNode类，由自身解析-->
+            #{id}
+        </foreach>
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM `user`
+        <include refid="byId"/>
+    </delete>
+
+    <insert id="add" useGeneratedKeys="true">
+        <selectKey resultType="java.lang.Long" keyProperty="id" order="BEFORE">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO `user` VALUES (#{id},#{name},#{email},#{age},#{sex},#{schoolName});
+    </insert>
+
+    <update id="editEmailById">
+        UPDATE `user`
+        SET `email` = #{email}
+        <include refid="byId"/>
+    </update>
+</mapper>
